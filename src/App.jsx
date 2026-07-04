@@ -1372,12 +1372,14 @@ function GuestPage({ slug, guestNameOverride }) {
   const [invitationState, setInvitationState] = useState("cover");
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [errorDetail, setErrorDetail] = useState("");
   const audioRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       if (!isSupabaseConfigured) {
+        setErrorDetail("not-configured");
         setStatus("error");
         return;
       }
@@ -1386,6 +1388,7 @@ function GuestPage({ slug, guestNameOverride }) {
       if (result.error === "not-found") {
         setStatus("not-found");
       } else if (result.error) {
+        setErrorDetail(result.error);
         setStatus("error");
       } else {
         setData(result.data);
@@ -1443,6 +1446,7 @@ function GuestPage({ slug, guestNameOverride }) {
         <p className="text-slate-500 text-xs max-w-xs">
           Server sedang bermasalah atau belum terhubung. Coba muat ulang halaman beberapa saat lagi.
         </p>
+        <p className="text-slate-700 text-[10px] mt-3">Kode: {errorDetail || "unknown"}</p>
       </div>
     );
   }
@@ -1533,11 +1537,13 @@ function HostLinkPage({ slug }) {
   const [guestNameInput, setGuestNameInput] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [errorDetail, setErrorDetail] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       if (!isSupabaseConfigured) {
+        setErrorDetail("not-configured");
         setStatus("error");
         return;
       }
@@ -1546,6 +1552,7 @@ function HostLinkPage({ slug }) {
       if (result.error === "not-found") {
         setStatus("not-found");
       } else if (result.error) {
+        setErrorDetail(result.error);
         setStatus("error");
       } else {
         setEventData(result.data);
@@ -1611,6 +1618,7 @@ function HostLinkPage({ slug }) {
         <p className="text-slate-500 text-xs max-w-xs">
           Server sedang bermasalah atau belum terhubung. Coba muat ulang halaman beberapa saat lagi.
         </p>
+        <p className="text-slate-700 text-[10px] mt-3">Kode: {errorDetail || "unknown"}</p>
       </div>
     );
   }
