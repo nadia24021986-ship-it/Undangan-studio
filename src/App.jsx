@@ -268,7 +268,6 @@ async function fetchInvitation(slug) {
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
       }
     );
@@ -297,7 +296,6 @@ async function saveInvitation(slug, data) {
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         Prefer: "resolution=merge-duplicates,return=minimal",
       },
       body: JSON.stringify([{ slug, data, updated_at: new Date().toISOString() }]),
