@@ -256,8 +256,8 @@ function UploadBox({ label, previewUrl, onFile, roundedFull }) {
 /*  undangan secara online, supaya bisa dibuka dari HP mana pun.       */
 /* ------------------------------------------------------------------ */
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
 const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 async function fetchInvitation(slug) {
@@ -272,12 +272,20 @@ async function fetchInvitation(slug) {
         },
       }
     );
-    if (!res.ok) return { data: null, error: "fetch-failed" };
+    if (!res.ok) {
+      let bodyText = "";
+      try {
+        bodyText = await res.text();
+      } catch {
+        // abaikan
+      }
+      return { data: null, error: `http-${res.status}:${bodyText.slice(0, 120)}` };
+    }
     const json = await res.json();
     if (!json || json.length === 0) return { data: null, error: "not-found" };
     return { data: json[0].data, error: null };
-  } catch {
-    return { data: null, error: "network" };
+  } catch (err) {
+    return { data: null, error: `network:${(err && err.message) || "unknown"}` };
   }
 }
 
@@ -1446,7 +1454,7 @@ function GuestPage({ slug, guestNameOverride }) {
         <p className="text-slate-500 text-xs max-w-xs">
           Server sedang bermasalah atau belum terhubung. Coba muat ulang halaman beberapa saat lagi.
         </p>
-        <p className="text-slate-700 text-[10px] mt-3">Kode: {errorDetail || "unknown"}</p>
+        <p className="text-slate-700 text-[10px] mt-3 max-w-xs break-all px-2">Kode: {errorDetail || "unknown"}</p>
       </div>
     );
   }
@@ -1618,7 +1626,7 @@ function HostLinkPage({ slug }) {
         <p className="text-slate-500 text-xs max-w-xs">
           Server sedang bermasalah atau belum terhubung. Coba muat ulang halaman beberapa saat lagi.
         </p>
-        <p className="text-slate-700 text-[10px] mt-3">Kode: {errorDetail || "unknown"}</p>
+        <p className="text-slate-700 text-[10px] mt-3 max-w-xs break-all px-2">Kode: {errorDetail || "unknown"}</p>
       </div>
     );
   }
