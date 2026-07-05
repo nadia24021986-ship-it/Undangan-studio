@@ -173,8 +173,7 @@ const DEFAULT_DATA = {
       url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=800&auto=format&fit=crop",
     },
   ],
-  music:
-    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8e6a70b3b.mp3",
+  music: "",
 };
 
 /* ------------------------------------------------------------------ */
@@ -432,7 +431,7 @@ function AdminDashboard() {
   const handleOpenInvitation = () => {
     setInvitationState("content");
     setTimeout(() => {
-      if (audioRef.current) {
+      if (audioRef.current && data.music) {
         audioRef.current.play().catch(() => {});
         setMusicPlaying(true);
       }
@@ -450,7 +449,7 @@ function AdminDashboard() {
   };
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !data.music) return;
     if (musicPlaying) {
       audioRef.current.pause();
     } else {
@@ -1477,7 +1476,7 @@ function GuestPage({ slug, guestNameOverride }) {
   const handleOpenInvitation = () => {
     setInvitationState("content");
     setTimeout(() => {
-      if (audioRef.current) {
+      if (audioRef.current && data.music) {
         audioRef.current.play().catch(() => {});
         setMusicPlaying(true);
       }
@@ -1495,7 +1494,7 @@ function GuestPage({ slug, guestNameOverride }) {
   };
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !data.music) return;
     if (musicPlaying) {
       audioRef.current.pause();
     } else {
