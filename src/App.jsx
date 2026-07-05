@@ -1345,6 +1345,23 @@ function ContentScreen({
               <p className="text-xs font-semibold">{data.address}</p>
             </div>
           </div>
+
+          {data.address && (
+            <div className={`rounded-lg overflow-hidden border ${theme.border} h-44`}>
+              <iframe
+                title="Lokasi Acara"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(
+                  data.address
+                )}&output=embed`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          )}
+
           <a
             href={data.mapsLink}
             target="_blank"
