@@ -122,15 +122,78 @@ const FONTS = {
 const TABS = [
   { id: "general", label: "Tata Letak", icon: LayoutGrid },
   { id: "design", label: "Tema & Font", icon: Palette },
-  { id: "couple", label: "Mempelai", icon: User },
+  { id: "couple", label: "Profil", icon: User },
   { id: "media", label: "Media & Lagu", icon: Film },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  JENIS ACARA: menentukan label & tata letak yang sesuai             */
+/* ------------------------------------------------------------------ */
+const EVENT_TYPES = {
+  pernikahan: {
+    label: "Pernikahan",
+    coverTag: "The Wedding Of",
+    contentTag: "We Are Getting Married",
+    twoPersons: true,
+    personSectionTitle: "Data Mempelai",
+    person1Label: "Mempelai Pria",
+    person2Label: "Mempelai Wanita",
+    parentsPrefix: "Putra dari",
+    parentsPrefix2: "Putri dari",
+  },
+  khitanan: {
+    label: "Khitanan / Sunatan",
+    coverTag: "Turut Mengundang",
+    contentTag: "Acara Khitanan",
+    twoPersons: false,
+    personSectionTitle: "Profil Anak yang Dikhitan",
+    person1Label: "Data Anak",
+    parentsPrefix: "Putra dari",
+  },
+  aqiqah: {
+    label: "Aqiqah",
+    coverTag: "Turut Mengundang",
+    contentTag: "Acara Aqiqah",
+    twoPersons: false,
+    personSectionTitle: "Profil Anak",
+    person1Label: "Data Anak",
+    parentsPrefix: "Putra/Putri dari",
+  },
+  syukuran: {
+    label: "Syukuran",
+    coverTag: "Turut Mengundang",
+    contentTag: "Acara Syukuran",
+    twoPersons: false,
+    personSectionTitle: "Profil Acara",
+    person1Label: "Nama yang Merayakan",
+    parentsPrefix: "Keluarga dari",
+  },
+  ulangtahun: {
+    label: "Ulang Tahun",
+    coverTag: "Turut Mengundang",
+    contentTag: "Perayaan Ulang Tahun",
+    twoPersons: false,
+    personSectionTitle: "Profil Acara",
+    person1Label: "Nama yang Berulang Tahun",
+    parentsPrefix: "Keluarga dari",
+  },
+  lainnya: {
+    label: "Acara Lainnya",
+    coverTag: "Turut Mengundang",
+    contentTag: "Acara Kami",
+    twoPersons: false,
+    personSectionTitle: "Profil Acara",
+    person1Label: "Nama Utama",
+    parentsPrefix: "Keluarga dari",
+  },
+};
 
 /* ------------------------------------------------------------------ */
 /*  DATA DEFAULT (DUMMY)                                               */
 /* ------------------------------------------------------------------ */
 
 const DEFAULT_DATA = {
+  eventType: "pernikahan",
   slug: "budi-rara",
   guestName: "Bapak/Ibu Sahabat Kami",
   eventDate: "2026-11-14",
@@ -406,6 +469,7 @@ function AdminDashboard() {
 
   const theme = THEMES[data.theme];
   const font = FONTS[data.font];
+  const currentEventType = EVENT_TYPES[data.eventType] || EVENT_TYPES.pernikahan;
 
   /* ---- Inject Google Fonts dinamis ---- */
   useEffect(() => {
@@ -682,6 +746,25 @@ function AdminDashboard() {
               <div className="animate-[fadeIn_0.3s_ease]">
                 <SectionTitle title="Tata Letak & Nama" desc="Atur URL undangan dan detail acara utama." />
 
+                <div className="mb-5">
+                  <FieldLabel icon={Sparkles}>Jenis Acara</FieldLabel>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(EVENT_TYPES).map(([key, ev]) => (
+                      <button
+                        key={key}
+                        onClick={() => update("eventType", key)}
+                        className={`rounded-lg border-2 py-2.5 px-2 text-xs font-medium transition-all ${
+                          data.eventType === key
+                            ? "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-300"
+                            : "border-slate-800 hover:border-slate-600 text-slate-300"
+                        }`}
+                      >
+                        {ev.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="mb-4">
                   <FieldLabel icon={LinkIcon}>Slug URL Undangan</FieldLabel>
                   <div className="flex items-center bg-slate-900/80 border border-slate-700/80 rounded-lg overflow-hidden focus-within:border-fuchsia-500/60 focus-within:ring-1 focus-within:ring-fuchsia-500/40">
@@ -835,14 +918,25 @@ function AdminDashboard() {
               </div>
             )}
 
-            {/* ============ TAB 3: MEMPELAI ============ */}
+            {/* ============ TAB 3: PROFIL ============ */}
             {activeTab === "couple" && (
               <div className="animate-[fadeIn_0.3s_ease]">
-                <SectionTitle title="Data Mempelai" desc="Lengkapi profil kedua mempelai." />
+                <SectionTitle
+                  title={currentEventType.personSectionTitle}
+                  desc={
+                    currentEventType.twoPersons
+                      ? "Lengkapi profil kedua mempelai."
+                      : "Lengkapi profil untuk acara ini."
+                  }
+                />
 
-                <div className={`rounded-xl border ${theme.border} bg-slate-900/40 p-4 mb-5`}>
+                <div
+                  className={`rounded-xl border ${theme.border} bg-slate-900/40 p-4 ${
+                    currentEventType.twoPersons ? "mb-5" : ""
+                  }`}
+                >
                   <p className="text-xs font-bold uppercase tracking-wider text-fuchsia-400 mb-3">
-                    Mempelai Pria
+                    {currentEventType.person1Label}
                   </p>
                   <UploadBox
                     label="Foto"
@@ -872,37 +966,39 @@ function AdminDashboard() {
                   />
                 </div>
 
-                <div className={`rounded-xl border ${theme.border} bg-slate-900/40 p-4`}>
-                  <p className="text-xs font-bold uppercase tracking-wider text-fuchsia-400 mb-3">
-                    Mempelai Wanita
-                  </p>
-                  <UploadBox
-                    label="Foto"
-                    roundedFull
-                    previewUrl={data.bride.photo}
-                    onFile={(url) => updatePerson("bride", "photo", url)}
-                  />
-                  <TextInput
-                    label="Nama Panggilan"
-                    value={data.bride.nickname}
-                    onChange={(e) => updatePerson("bride", "nickname", e.target.value)}
-                  />
-                  <TextInput
-                    label="Nama Lengkap & Gelar"
-                    value={data.bride.fullName}
-                    onChange={(e) => updatePerson("bride", "fullName", e.target.value)}
-                  />
-                  <TextInput
-                    label="Nama Ayah"
-                    value={data.bride.father}
-                    onChange={(e) => updatePerson("bride", "father", e.target.value)}
-                  />
-                  <TextInput
-                    label="Nama Ibu"
-                    value={data.bride.mother}
-                    onChange={(e) => updatePerson("bride", "mother", e.target.value)}
-                  />
-                </div>
+                {currentEventType.twoPersons && (
+                  <div className={`rounded-xl border ${theme.border} bg-slate-900/40 p-4`}>
+                    <p className="text-xs font-bold uppercase tracking-wider text-fuchsia-400 mb-3">
+                      {currentEventType.person2Label}
+                    </p>
+                    <UploadBox
+                      label="Foto"
+                      roundedFull
+                      previewUrl={data.bride.photo}
+                      onFile={(url) => updatePerson("bride", "photo", url)}
+                    />
+                    <TextInput
+                      label="Nama Panggilan"
+                      value={data.bride.nickname}
+                      onChange={(e) => updatePerson("bride", "nickname", e.target.value)}
+                    />
+                    <TextInput
+                      label="Nama Lengkap & Gelar"
+                      value={data.bride.fullName}
+                      onChange={(e) => updatePerson("bride", "fullName", e.target.value)}
+                    />
+                    <TextInput
+                      label="Nama Ayah"
+                      value={data.bride.father}
+                      onChange={(e) => updatePerson("bride", "father", e.target.value)}
+                    />
+                    <TextInput
+                      label="Nama Ibu"
+                      value={data.bride.mother}
+                      onChange={(e) => updatePerson("bride", "mother", e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -1095,6 +1191,7 @@ function InvitationPreview({
 
 /* ---------------- STATE 1: COVER ---------------- */
 function CoverScreen({ data, theme, font, onOpen }) {
+  const et = EVENT_TYPES[data.eventType] || EVENT_TYPES.pernikahan;
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-between text-center px-6 py-10 overflow-hidden">
       <img
@@ -1106,7 +1203,7 @@ function CoverScreen({ data, theme, font, onOpen }) {
 
       <div className="relative z-10 pt-4">
         <p className={`text-[11px] tracking-[0.3em] uppercase ${theme.accent} animate-pulse`}>
-          The Wedding Of
+          {et.coverTag}
         </p>
       </div>
 
@@ -1115,7 +1212,13 @@ function CoverScreen({ data, theme, font, onOpen }) {
           className="text-4xl sm:text-5xl text-white drop-shadow-lg leading-tight"
           style={{ fontFamily: FONTS.script.family }}
         >
-          {data.groom.nickname} <span className={theme.accent}>&</span> {data.bride.nickname}
+          {et.twoPersons ? (
+            <>
+              {data.groom.nickname} <span className={theme.accent}>&</span> {data.bride.nickname}
+            </>
+          ) : (
+            data.groom.nickname
+          )}
         </h1>
         <div className={`h-px w-16 ${theme.divider}`} />
         <p className="text-xs text-white/80 tracking-wide">{formatShortDate(data.eventDate)}</p>
@@ -1165,6 +1268,7 @@ function ContentScreen({
   formattedDate,
 }) {
   const currentMedia = data.gallery[galleryIndex];
+  const et = EVENT_TYPES[data.eventType] || EVENT_TYPES.pernikahan;
 
   return (
     <div className="relative w-full min-h-full pb-10">
@@ -1182,13 +1286,13 @@ function ContentScreen({
       {/* Header */}
       <div className="pt-14 pb-8 px-6 text-center">
         <p className={`text-[10px] uppercase tracking-[0.3em] ${theme.accent} mb-3`}>
-          We Are Getting Married
+          {et.contentTag}
         </p>
         <h1
           className="text-3xl leading-tight mb-3"
           style={{ fontFamily: FONTS.script.family }}
         >
-          {data.groom.nickname} & {data.bride.nickname}
+          {et.twoPersons ? `${data.groom.nickname} & ${data.bride.nickname}` : data.groom.nickname}
         </h1>
         <div className="flex items-center justify-center gap-2 mb-1">
           <div className={`h-px w-8 ${theme.divider}`} />
@@ -1204,13 +1308,17 @@ function ContentScreen({
         <p className={`text-[10px] mt-3 ${theme.accent} tracking-wide`}>{data.quoteSource}</p>
       </div>
 
-      {/* Profil Mempelai */}
+      {/* Profil */}
       <div className="px-6 mb-10 space-y-6">
-        <PersonCard person={data.groom} theme={theme} />
-        <div className="flex items-center justify-center">
-          <Heart size={16} className={theme.accent} />
-        </div>
-        <PersonCard person={data.bride} theme={theme} />
+        <PersonCard person={data.groom} theme={theme} parentsPrefix={et.parentsPrefix} />
+        {et.twoPersons && (
+          <>
+            <div className="flex items-center justify-center">
+              <Heart size={16} className={theme.accent} />
+            </div>
+            <PersonCard person={data.bride} theme={theme} parentsPrefix={et.parentsPrefix2 || et.parentsPrefix} />
+          </>
+        )}
       </div>
 
       {/* Acara */}
@@ -1349,7 +1457,8 @@ function SectionHeading({ theme, title }) {
   );
 }
 
-function PersonCard({ person, theme }) {
+function PersonCard({ person, theme, parentsPrefix }) {
+  const hasParents = Boolean(person.father || person.mother);
   return (
     <div className={`flex flex-col items-center text-center rounded-xl border ${theme.border} ${theme.cardBg} p-5`}>
       <div className={`w-24 h-24 rounded-full overflow-hidden ring-2 ${theme.ring} ring-offset-2 ring-offset-transparent mb-3 sepia-[.15]`}>
@@ -1359,9 +1468,13 @@ function PersonCard({ person, theme }) {
         {person.nickname}
       </h4>
       <p className="text-sm font-semibold mb-1">{person.fullName}</p>
-      <p className={`text-[11px] ${theme.subtext}`}>
-        Putra/Putri dari {person.father} & {person.mother}
-      </p>
+      {hasParents && (
+        <p className={`text-[11px] ${theme.subtext}`}>
+          {parentsPrefix || "Putra/Putri dari"} {person.father}
+          {person.father && person.mother ? " & " : ""}
+          {person.mother}
+        </p>
+      )}
     </div>
   );
 }
@@ -1638,7 +1751,10 @@ function HostLinkPage({ slug }) {
           <div className="leading-tight">
             <h1 className="text-base font-bold text-white">Buat Link Tamu</h1>
             <p className="text-[11px] text-slate-500">
-              {eventData?.groom?.nickname} & {eventData?.bride?.nickname}
+              {eventData &&
+                (EVENT_TYPES[eventData.eventType]?.twoPersons ?? true
+                  ? `${eventData.groom?.nickname} & ${eventData.bride?.nickname}`
+                  : eventData.groom?.nickname)}
             </p>
           </div>
         </div>
