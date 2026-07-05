@@ -120,10 +120,8 @@ const FONTS = {
 };
 
 const TABS = [
-  { id: "general", label: "Tata Letak", icon: LayoutGrid },
-  { id: "design", label: "Tema & Font", icon: Palette },
-  { id: "couple", label: "Profil", icon: User },
-  { id: "media", label: "Media & Lagu", icon: Film },
+  { id: "general", label: "Info Acara", icon: LayoutGrid },
+  { id: "media", label: "Media", icon: Film },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -434,7 +432,6 @@ function AdminDashboard() {
   const [viewMode, setViewMode] = useState("hp"); // 'hp' | 'pc'
   const [invitationState, setInvitationState] = useState("cover"); // 'cover' | 'content'
   const [data, setData] = useState(loadInitialData);
-  const [musicPlaying, setMusicPlaying] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [unlocked, setUnlocked] = useState(
@@ -443,8 +440,6 @@ function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
-
-  const audioRef = useRef(null);
 
   /* ---- Simpan draf otomatis ke localStorage setiap ada perubahan data ---- */
   useEffect(() => {
@@ -494,32 +489,11 @@ function AdminDashboard() {
 
   const handleOpenInvitation = () => {
     setInvitationState("content");
-    setTimeout(() => {
-      if (audioRef.current && data.music) {
-        audioRef.current.play().catch(() => {});
-        setMusicPlaying(true);
-      }
-    }, 150);
   };
 
   const handleBackToCover = () => {
     setInvitationState("cover");
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setMusicPlaying(false);
     setGalleryIndex(0);
-  };
-
-  const toggleMusic = () => {
-    if (!audioRef.current || !data.music) return;
-    if (musicPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(() => {});
-    }
-    setMusicPlaying(!musicPlaying);
   };
 
   const handleGalleryUpload = (e) => {
@@ -537,11 +511,6 @@ function AdminDashboard() {
       gallery: prev.gallery.filter((_, i) => i !== idx),
     }));
     setGalleryIndex(0);
-  };
-
-  const handleMusicUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) update("music", URL.createObjectURL(file));
   };
 
   const copyLink = () => {
@@ -741,10 +710,10 @@ function AdminDashboard() {
           </div>
 
           <div className="p-5 sm:p-6 max-h-[calc(100vh-115px)] overflow-y-auto">
-            {/* ============ TAB 1: GENERAL ============ */}
+            {/* ============ TAB 1: INFO ACARA ============ */}
             {activeTab === "general" && (
               <div className="animate-[fadeIn_0.3s_ease]">
-                <SectionTitle title="Tata Letak & Nama" desc="Atur URL undangan dan detail acara utama." />
+                <SectionTitle title="Info Acara" desc="Atur URL undangan dan identitas acara." />
 
                 <div className="mb-5">
                   <FieldLabel icon={Sparkles}>Jenis Acara</FieldLabel>
@@ -816,31 +785,31 @@ function AdminDashboard() {
                   onChange={(e) => update("guestName", e.target.value)}
                 />
 
-                <div className="grid grid-cols-2 gap-3">
-                  <TextInput
-                    label="Tanggal Acara"
-                    icon={Calendar}
-                    type="date"
-                    value={data.eventDate}
-                    onChange={(e) => update("eventDate", e.target.value)}
-                  />
-                  <TextInput
-                    label="Waktu Acara"
-                    icon={Clock}
-                    placeholder="10:00 - 13:00 WIB"
-                    value={data.eventTime}
-                    onChange={(e) => update("eventTime", e.target.value)}
-                  />
-                </div>
-
-                <TextArea
-                  label="Alamat Lengkap"
-                  icon={MapPin}
-                  rows={2}
-                  placeholder="Nama gedung, jalan, kota..."
-                  value={data.address}
-                  onChange={(e) => update("address", e.target.value)}
+                <TextInput
+                  label="Tanggal Acara"
+                  icon={Calendar}
+                  type="date"
+                  value={data.eventDate}
+                  onChange={(e) => update("eventDate", e.target.value)}
                 />
+
+                <TextInput
+                  label={currentEventType.person1Label}
+                  icon={User}
+                  placeholder="Budi"
+                  value={data.groom.nickname}
+                  onChange={(e) => updatePerson("groom", "nickname", e.target.value)}
+                />
+
+                {currentEventType.twoPersons && (
+                  <TextInput
+                    label={currentEventType.person2Label}
+                    icon={User}
+                    placeholder="Rara"
+                    value={data.bride.nickname}
+                    onChange={(e) => updatePerson("bride", "nickname", e.target.value)}
+                  />
+                )}
 
                 <TextInput
                   label="Link Google Maps"
@@ -849,217 +818,68 @@ function AdminDashboard() {
                   value={data.mapsLink}
                   onChange={(e) => update("mapsLink", e.target.value)}
                 />
-
-                <TextArea
-                  label="Kutipan (Quote)"
-                  icon={Heart}
-                  rows={3}
-                  placeholder="Tuliskan kutipan pilihan..."
-                  value={data.quote}
-                  onChange={(e) => update("quote", e.target.value)}
-                />
-
-                <TextInput
-                  label="Sumber Kutipan"
-                  placeholder="QS. Ar-Rum: 21"
-                  value={data.quoteSource}
-                  onChange={(e) => update("quoteSource", e.target.value)}
-                />
               </div>
             )}
 
-            {/* ============ TAB 2: DESIGN ============ */}
-            {activeTab === "design" && (
+            {/* ============ TAB 2: MEDIA ============ */}
+            {activeTab === "media" && (
               <div className="animate-[fadeIn_0.3s_ease]">
-                <SectionTitle title="Tema & Font" desc="Pilih palet warna dan tipografi undangan Anda." />
-
-                <FieldLabel icon={Palette}>Preset Tema</FieldLabel>
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  {Object.entries(THEMES).map(([key, t]) => (
-                    <button
-                      key={key}
-                      onClick={() => update("theme", key)}
-                      className={`relative rounded-xl overflow-hidden border-2 transition-all p-3 flex flex-col gap-2 items-start ${
-                        data.theme === key
-                          ? "border-fuchsia-500 scale-[1.02] shadow-lg shadow-fuchsia-900/30"
-                          : "border-slate-800 hover:border-slate-600"
-                      }`}
-                    >
-                      <div className={`w-full h-10 rounded-lg ${t.swatch}`} />
-                      <span className="text-xs font-semibold text-slate-200">{t.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <FieldLabel icon={Sparkles}>Pilihan Font</FieldLabel>
-                <div className="grid grid-cols-3 gap-2 mb-6">
-                  {Object.entries(FONTS).map(([key, f]) => (
-                    <button
-                      key={key}
-                      onClick={() => update("font", key)}
-                      style={{ fontFamily: f.family }}
-                      className={`rounded-lg border-2 py-3 px-2 text-center transition-all ${
-                        data.font === key
-                          ? "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-300"
-                          : "border-slate-800 hover:border-slate-600 text-slate-300"
-                      }`}
-                    >
-                      <div className="text-lg leading-none mb-1">Aa</div>
-                      <div className="text-[10px] font-sans">{f.label}</div>
-                    </button>
-                  ))}
-                </div>
+                <SectionTitle title="Media" desc="Ganti background sampul dan unggah video/foto isi undangan." />
 
                 <UploadBox
-                  label="Foto Latar Belakang Sampul"
+                  label="Ganti Background Sampul"
                   previewUrl={data.coverPhoto}
                   onFile={(url) => update("coverPhoto", url)}
                 />
-              </div>
-            )}
 
-            {/* ============ TAB 3: PROFIL ============ */}
-            {activeTab === "couple" && (
-              <div className="animate-[fadeIn_0.3s_ease]">
-                <SectionTitle
-                  title={currentEventType.personSectionTitle}
-                  desc={
-                    currentEventType.twoPersons
-                      ? "Lengkapi profil kedua mempelai."
-                      : "Lengkapi profil untuk acara ini."
-                  }
-                />
-
-                <div
-                  className={`rounded-xl border ${theme.border} bg-slate-900/40 p-4 ${
-                    currentEventType.twoPersons ? "mb-5" : ""
-                  }`}
-                >
-                  <p className="text-xs font-bold uppercase tracking-wider text-fuchsia-400 mb-3">
-                    {currentEventType.person1Label}
+                <div className="mt-6">
+                  <FieldLabel icon={ImageIcon}>Import Video / Foto Undangan</FieldLabel>
+                  <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                    Unggah hasil desain video/foto undangan kamu (dari aplikasi lain). File ini
+                    yang akan langsung tampil begitu tamu menekan tombol "Buka Undangan". Bisa
+                    unggah lebih dari satu — akan tampil berurutan otomatis.
                   </p>
-                  <UploadBox
-                    label="Foto"
-                    roundedFull
-                    previewUrl={data.groom.photo}
-                    onFile={(url) => updatePerson("groom", "photo", url)}
-                  />
-                  <TextInput
-                    label="Nama Panggilan"
-                    value={data.groom.nickname}
-                    onChange={(e) => updatePerson("groom", "nickname", e.target.value)}
-                  />
-                  <TextInput
-                    label="Nama Lengkap & Gelar"
-                    value={data.groom.fullName}
-                    onChange={(e) => updatePerson("groom", "fullName", e.target.value)}
-                  />
-                  <TextInput
-                    label="Nama Ayah"
-                    value={data.groom.father}
-                    onChange={(e) => updatePerson("groom", "father", e.target.value)}
-                  />
-                  <TextInput
-                    label="Nama Ibu"
-                    value={data.groom.mother}
-                    onChange={(e) => updatePerson("groom", "mother", e.target.value)}
-                  />
-                </div>
+                  <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-700 hover:border-fuchsia-500/60 rounded-lg py-6 cursor-pointer mb-3 bg-slate-900/60 transition-colors">
+                    <Upload size={18} className="text-slate-500" />
+                    <span className="text-xs text-slate-500">Klik untuk unggah foto/video (bisa multiple)</span>
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleGalleryUpload}
+                    />
+                  </label>
 
-                {currentEventType.twoPersons && (
-                  <div className={`rounded-xl border ${theme.border} bg-slate-900/40 p-4`}>
-                    <p className="text-xs font-bold uppercase tracking-wider text-fuchsia-400 mb-3">
-                      {currentEventType.person2Label}
-                    </p>
-                    <UploadBox
-                      label="Foto"
-                      roundedFull
-                      previewUrl={data.bride.photo}
-                      onFile={(url) => updatePerson("bride", "photo", url)}
-                    />
-                    <TextInput
-                      label="Nama Panggilan"
-                      value={data.bride.nickname}
-                      onChange={(e) => updatePerson("bride", "nickname", e.target.value)}
-                    />
-                    <TextInput
-                      label="Nama Lengkap & Gelar"
-                      value={data.bride.fullName}
-                      onChange={(e) => updatePerson("bride", "fullName", e.target.value)}
-                    />
-                    <TextInput
-                      label="Nama Ayah"
-                      value={data.bride.father}
-                      onChange={(e) => updatePerson("bride", "father", e.target.value)}
-                    />
-                    <TextInput
-                      label="Nama Ibu"
-                      value={data.bride.mother}
-                      onChange={(e) => updatePerson("bride", "mother", e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ============ TAB 4: MEDIA ============ */}
-            {activeTab === "media" && (
-              <div className="animate-[fadeIn_0.3s_ease]">
-                <SectionTitle title="Media Slide & Lagu" desc="Unggah galeri kenangan dan musik latar." />
-
-                <FieldLabel icon={ImageIcon}>Galeri Foto / Video</FieldLabel>
-                <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-700 hover:border-fuchsia-500/60 rounded-lg py-6 cursor-pointer mb-3 bg-slate-900/60 transition-colors">
-                  <Upload size={18} className="text-slate-500" />
-                  <span className="text-xs text-slate-500">Klik untuk unggah foto/video (bisa multiple)</span>
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleGalleryUpload}
-                  />
-                </label>
-
-                <div className="grid grid-cols-3 gap-2 mb-6">
-                  {data.gallery.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="relative group rounded-lg overflow-hidden aspect-square bg-slate-900 border border-slate-800"
-                    >
-                      {item.type === "video" ? (
-                        <video src={item.url} className="w-full h-full object-cover" />
-                      ) : (
-                        <img src={item.url} className="w-full h-full object-cover" alt="" />
-                      )}
-                      <button
-                        onClick={() => removeGalleryItem(idx)}
-                        className="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  <div className="grid grid-cols-3 gap-2">
+                    {data.gallery.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="relative group rounded-lg overflow-hidden aspect-square bg-slate-900 border border-slate-800"
                       >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  {data.gallery.length === 0 && (
-                    <p className="col-span-3 text-center text-xs text-slate-600 py-6">
-                      Belum ada media di galeri.
-                    </p>
-                  )}
+                        {item.type === "video" ? (
+                          <video src={item.url} className="w-full h-full object-cover" />
+                        ) : (
+                          <img src={item.url} className="w-full h-full object-cover" alt="" />
+                        )}
+                        <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded">
+                          {idx + 1}
+                        </span>
+                        <button
+                          onClick={() => removeGalleryItem(idx)}
+                          className="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    {data.gallery.length === 0 && (
+                      <p className="col-span-3 text-center text-xs text-slate-600 py-6">
+                        Belum ada video/foto yang diunggah.
+                      </p>
+                    )}
+                  </div>
                 </div>
-
-                <FieldLabel icon={Music}>Musik Latar</FieldLabel>
-                <label className="flex items-center justify-between gap-2 border border-slate-700 hover:border-fuchsia-500/60 rounded-lg px-4 py-3 cursor-pointer bg-slate-900/60 transition-colors">
-                  <span className="text-xs text-slate-400 truncate flex items-center gap-2">
-                    <Music size={14} className="text-fuchsia-400 shrink-0" />
-                    {data.music ? "Musik terpasang — ganti file" : "Pilih file MP3/audio"}
-                  </span>
-                  <Upload size={14} className="text-slate-500 shrink-0" />
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    onChange={handleMusicUpload}
-                  />
-                </label>
               </div>
             )}
           </div>
@@ -1077,13 +897,10 @@ function AdminDashboard() {
               invitationState={invitationState}
               onOpen={handleOpenInvitation}
               onBack={handleBackToCover}
-              musicPlaying={musicPlaying}
-              toggleMusic={toggleMusic}
               galleryIndex={galleryIndex}
               nextSlide={nextSlide}
               prevSlide={prevSlide}
               formattedDate={formattedDate}
-              audioRef={audioRef}
             />
           </PhoneFrame>
         </section>
@@ -1157,32 +974,23 @@ function InvitationPreview({
   invitationState,
   onOpen,
   onBack,
-  musicPlaying,
-  toggleMusic,
   galleryIndex,
   nextSlide,
   prevSlide,
   formattedDate,
-  audioRef,
 }) {
   return (
     <div className={`relative w-full h-full ${theme.bg} ${theme.text}`} style={{ fontFamily: font.family }}>
-      <audio ref={audioRef} src={data.music} loop />
-
       {invitationState === "cover" ? (
         <CoverScreen data={data} theme={theme} font={font} onOpen={onOpen} />
       ) : (
         <ContentScreen
           data={data}
           theme={theme}
-          font={font}
           onBack={onBack}
-          musicPlaying={musicPlaying}
-          toggleMusic={toggleMusic}
           galleryIndex={galleryIndex}
           nextSlide={nextSlide}
           prevSlide={prevSlide}
-          formattedDate={formattedDate}
         />
       )}
     </div>
@@ -1255,207 +1063,94 @@ function formatShortDate(dateStr) {
 }
 
 /* ---------------- STATE 2: CONTENT ---------------- */
-function ContentScreen({
-  data,
-  theme,
-  font,
-  onBack,
-  musicPlaying,
-  toggleMusic,
-  galleryIndex,
-  nextSlide,
-  prevSlide,
-  formattedDate,
-}) {
-  const currentMedia = data.gallery[galleryIndex];
-  const et = EVENT_TYPES[data.eventType] || EVENT_TYPES.pernikahan;
+function ContentScreen({ data, theme, onBack, galleryIndex, nextSlide, prevSlide }) {
+  const gallery = data.gallery || [];
+  const currentMedia = gallery[galleryIndex];
+
+  /* Auto-lanjut ke slide berikutnya untuk foto (video lanjut otomatis lewat onEnded) */
+  useEffect(() => {
+    if (!currentMedia || currentMedia.type === "video") return;
+    const timer = setTimeout(() => {
+      nextSlide();
+    }, 5000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [galleryIndex, currentMedia]);
 
   return (
-    <div className="relative w-full min-h-full pb-10">
-      {/* Floating music button */}
-      <button
-        onClick={toggleMusic}
-        className={`fixed z-40 bottom-6 right-5 w-11 h-11 rounded-full ${theme.accentBg} text-white flex items-center justify-center shadow-lg shadow-black/50 ${
-          musicPlaying ? "animate-pulse" : ""
-        }`}
-        style={{ position: "absolute" }}
-      >
-        {musicPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
-      </button>
-
-      {/* Header */}
-      <div className="pt-14 pb-8 px-6 text-center">
-        <p className={`text-[10px] uppercase tracking-[0.3em] ${theme.accent} mb-3`}>
-          {et.contentTag}
-        </p>
-        <h1
-          className="text-3xl leading-tight mb-3"
-          style={{ fontFamily: FONTS.script.family }}
-        >
-          {et.twoPersons ? `${data.groom.nickname} & ${data.bride.nickname}` : data.groom.nickname}
-        </h1>
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <div className={`h-px w-8 ${theme.divider}`} />
-          <Heart size={11} className={theme.accent} />
-          <div className={`h-px w-8 ${theme.divider}`} />
+    <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+      {currentMedia ? (
+        currentMedia.type === "video" ? (
+          <video
+            key={galleryIndex}
+            src={currentMedia.url}
+            className="w-full h-full object-contain"
+            autoPlay
+            playsInline
+            controls
+            onEnded={nextSlide}
+          />
+        ) : (
+          <img
+            key={galleryIndex}
+            src={currentMedia.url}
+            className="w-full h-full object-contain"
+            alt="Undangan"
+          />
+        )
+      ) : (
+        <div className="text-slate-500 text-xs text-center px-8 leading-relaxed">
+          Belum ada video atau foto yang diunggah untuk undangan ini.
         </div>
-        <p className={`text-xs ${theme.subtext}`}>{formattedDate}</p>
-      </div>
+      )}
 
-      {/* Quote */}
-      <div className={`mx-6 mb-10 rounded-xl border ${theme.border} ${theme.cardBg} px-5 py-6 text-center`}>
-        <p className="text-[13px] italic leading-relaxed text-current/90">“{data.quote}”</p>
-        <p className={`text-[10px] mt-3 ${theme.accent} tracking-wide`}>{data.quoteSource}</p>
-      </div>
-
-      {/* Profil */}
-      <div className="px-6 mb-10 space-y-6">
-        <PersonCard person={data.groom} theme={theme} parentsPrefix={et.parentsPrefix} />
-        {et.twoPersons && (
-          <>
-            <div className="flex items-center justify-center">
-              <Heart size={16} className={theme.accent} />
-            </div>
-            <PersonCard person={data.bride} theme={theme} parentsPrefix={et.parentsPrefix2 || et.parentsPrefix} />
-          </>
-        )}
-      </div>
-
-      {/* Acara */}
-      <div className="px-6 mb-10">
-        <SectionHeading theme={theme} title="Detail Acara" />
-        <div className={`rounded-xl border ${theme.border} ${theme.cardBg} p-5 space-y-4`}>
-          <div className="flex items-start gap-3">
-            <Calendar size={16} className={`${theme.accent} mt-0.5 shrink-0`} />
-            <div>
-              <p className="text-xs font-semibold">{formattedDate}</p>
-              <p className={`text-[11px] ${theme.subtext}`}>Simpan tanggalnya</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Clock size={16} className={`${theme.accent} mt-0.5 shrink-0`} />
-            <div>
-              <p className="text-xs font-semibold">{data.eventTime}</p>
-              <p className={`text-[11px] ${theme.subtext}`}>Waktu setempat</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <MapPin size={16} className={`${theme.accent} mt-0.5 shrink-0`} />
-            <div>
-              <p className="text-xs font-semibold">{data.address}</p>
-            </div>
-          </div>
-
-          {data.address && (
-            <div className={`rounded-lg overflow-hidden border ${theme.border} h-44`}>
-              <iframe
-                title="Lokasi Acara"
-                src={`https://www.google.com/maps?q=${encodeURIComponent(
-                  data.address
-                )}&output=embed`}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-          )}
-
+      {/* Overlay atas: tombol lihat lokasi */}
+      {data.mapsLink && (
+        <div className="absolute top-4 left-0 right-0 flex justify-center z-20 px-6">
           <a
             href={data.mapsLink}
             target="_blank"
             rel="noreferrer"
-            className={`flex items-center justify-center gap-2 w-full ${theme.accentBg} ${theme.accentBgHover} text-white text-xs font-semibold py-2.5 rounded-full mt-2 transition-colors`}
+            className={`flex items-center gap-1.5 ${theme.accentBg} text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg`}
           >
-            <MapPin size={13} /> Lihat Peta (Google Maps)
+            <MapPin size={13} /> Lihat Lokasi
           </a>
         </div>
-      </div>
+      )}
 
-      {/* Galeri */}
-      <div className="px-6 mb-10">
-        <SectionHeading theme={theme} title="Galeri Kenangan" />
-        <div className={`relative rounded-xl overflow-hidden border ${theme.border} aspect-[4/5] bg-black/40`}>
-          {currentMedia ? (
-            currentMedia.type === "video" ? (
-              <video src={currentMedia.url} className="w-full h-full object-cover" controls />
-            ) : (
-              <img src={currentMedia.url} className="w-full h-full object-cover" alt="" />
-            )
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">
-              Belum ada media
-            </div>
-          )}
-
-          {data.gallery.length > 1 && (
-            <>
-              <button
-                onClick={prevSlide}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                {data.gallery.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === galleryIndex ? `w-4 ${theme.accentBg}` : "w-1.5 bg-white/40"
-                    }`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* RSVP */}
-      <div className="px-6 mb-10">
-        <SectionHeading theme={theme} title="RSVP & Ucapan" />
-        <div className={`rounded-xl border ${theme.border} ${theme.cardBg} p-5 space-y-3`}>
-          <input
-            disabled
-            placeholder="Nama Anda"
-            className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2.5 text-xs placeholder-current/40 cursor-not-allowed"
-          />
-          <select
-            disabled
-            className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2.5 text-xs cursor-not-allowed"
-          >
-            <option>Konfirmasi Kehadiran</option>
-          </select>
-          <textarea
-            disabled
-            rows={3}
-            placeholder="Tulis ucapan dan doa restu untuk kedua mempelai..."
-            className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2.5 text-xs placeholder-current/40 resize-none cursor-not-allowed"
-          />
+      {/* Prev/Next + indikator */}
+      {gallery.length > 1 && (
+        <>
           <button
-            disabled
-            className={`w-full flex items-center justify-center gap-2 ${theme.accentBg} text-white text-xs font-semibold py-2.5 rounded-full opacity-70 cursor-not-allowed`}
+            onClick={prevSlide}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-20"
           >
-            <Send size={13} /> Kirim Doa Restu
+            <ChevronLeft size={18} />
           </button>
-          <p className={`text-[10px] text-center ${theme.subtext}`}>
-            *Simulasi tampilan — fitur aktif setelah undangan dipublikasikan
-          </p>
-        </div>
-      </div>
+          <button
+            onClick={nextSlide}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-20"
+          >
+            <ChevronRight size={18} />
+          </button>
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+            {gallery.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === galleryIndex ? `w-4 ${theme.accentBg}` : "w-1.5 bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
-      {/* Kembali */}
-      <div className="px-6">
+      {/* Kembali ke sampul */}
+      <div className="absolute bottom-4 left-0 right-0 px-6 z-20">
         <button
           onClick={onBack}
-          className={`w-full flex items-center justify-center gap-2 border ${theme.border} text-current text-xs font-semibold py-3 rounded-full hover:bg-white/5 transition-colors`}
+          className="w-full flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold py-3 rounded-full hover:bg-white/20 transition-colors"
         >
           <ArrowLeft size={14} /> Kembali ke Sampul Depan
         </button>
@@ -1505,10 +1200,8 @@ function GuestPage({ slug, guestNameOverride }) {
   const [status, setStatus] = useState("loading"); // loading | ready | not-found | error
   const [data, setData] = useState(null);
   const [invitationState, setInvitationState] = useState("cover");
-  const [musicPlaying, setMusicPlaying] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [errorDetail, setErrorDetail] = useState("");
-  const audioRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1605,32 +1298,11 @@ function GuestPage({ slug, guestNameOverride }) {
 
   const handleOpenInvitation = () => {
     setInvitationState("content");
-    setTimeout(() => {
-      if (audioRef.current && data.music) {
-        audioRef.current.play().catch(() => {});
-        setMusicPlaying(true);
-      }
-    }, 150);
   };
 
   const handleBackToCover = () => {
     setInvitationState("cover");
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setMusicPlaying(false);
     setGalleryIndex(0);
-  };
-
-  const toggleMusic = () => {
-    if (!audioRef.current || !data.music) return;
-    if (musicPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(() => {});
-    }
-    setMusicPlaying(!musicPlaying);
   };
 
   const gallery = data.gallery || [];
@@ -1648,13 +1320,10 @@ function GuestPage({ slug, guestNameOverride }) {
           invitationState={invitationState}
           onOpen={handleOpenInvitation}
           onBack={handleBackToCover}
-          musicPlaying={musicPlaying}
-          toggleMusic={toggleMusic}
           galleryIndex={galleryIndex}
           nextSlide={nextSlide}
           prevSlide={prevSlide}
           formattedDate={formattedDate}
-          audioRef={audioRef}
         />
       </div>
     </div>
