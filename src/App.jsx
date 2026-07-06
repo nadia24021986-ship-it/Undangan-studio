@@ -366,6 +366,35 @@ async function saveInvitation(slug, data) {
   }
 }
 
+const MEDIA_BUCKET = "invitation-media";
+
+async function uploadMediaToStorage(slug, file) {
+  if (!isSupabaseConfigured) return { url: null, error: "not-configured" };
+  try {
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `${slug || "undangan"}/${Date.now()}-${safeName}`;
+    const uploadRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      }
+    );
+    if (!uploadRes.ok) {
+      const bodyText = await uploadRes.text().catch(() => "");
+      return { url: null, error: `upload-${uploadRes.status}:${bodyText.slice(0, 120)}` };
+    }
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${MEDIA_BUCKET}/${path}`;
+    return { url: publicUrl, error: null };
+  } catch (err) {
+    return { url: null, error: `network:${(err && err.message) || "unknown"}` };
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  ROUTING SEDERHANA BERBASIS PATH (tanpa library routing)            */
 /*  "/"                  -> mode ADMIN  (dashboard editor, dikunci)    */
@@ -440,6 +469,7 @@ function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   /* ---- Simpan draf otomatis ke localStorage setiap ada perubahan data ---- */
   useEffect(() => {
@@ -496,13 +526,32 @@ function AdminDashboard() {
     setGalleryIndex(0);
   };
 
-  const handleGalleryUpload = (e) => {
+  const handleGalleryUpload = async (e) => {
     const files = Array.from(e.target.files || []);
-    const items = files.map((f) => ({
-      type: f.type.startsWith("video") ? "video" : "image",
-      url: URL.createObjectURL(f),
-    }));
-    setData((prev) => ({ ...prev, gallery: [...prev.gallery, ...items] }));
+    if (files.length === 0) return;
+
+    if (!isSupabaseConfigured) {
+      // Server belum terhubung: pakai preview sementara saja (tidak permanen)
+      const items = files.map((f) => ({
+        type: f.type.startsWith("video") ? "video" : "image",
+        url: URL.createObjectURL(f),
+      }));
+      setData((prev) => ({ ...prev, gallery: [...prev.gallery, ...items] }));
+      return;
+    }
+
+    setUploadingGallery(true);
+    const newItems = [];
+    for (const f of files) {
+      const { url, error } = await uploadMediaToStorage(data.slug, f);
+      if (url) {
+        newItems.push({ type: f.type.startsWith("video") ? "video" : "image", url });
+      } else {
+        console.error("Upload gagal:", error);
+      }
+    }
+    setData((prev) => ({ ...prev, gallery: [...prev.gallery, ...newItems] }));
+    setUploadingGallery(false);
   };
 
   const removeGalleryItem = (idx) => {
@@ -841,13 +890,16 @@ function AdminDashboard() {
                   </p>
                   <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-slate-700 hover:border-fuchsia-500/60 rounded-lg py-6 cursor-pointer mb-3 bg-slate-900/60 transition-colors">
                     <Upload size={18} className="text-slate-500" />
-                    <span className="text-xs text-slate-500">Klik untuk unggah foto/video (bisa multiple)</span>
+                    <span className="text-xs text-slate-500">
+                      {uploadingGallery ? "Mengupload..." : "Klik untuk unggah foto/video (bisa multiple)"}
+                    </span>
                     <input
                       type="file"
                       accept="image/*,video/*"
                       multiple
                       className="hidden"
                       onChange={handleGalleryUpload}
+                      disabled={uploadingGallery}
                     />
                   </label>
 
