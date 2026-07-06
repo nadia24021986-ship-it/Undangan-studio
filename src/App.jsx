@@ -470,6 +470,7 @@ function AdminDashboard() {
   const [passwordError, setPasswordError] = useState(false);
   const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved | error
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [galleryUploadError, setGalleryUploadError] = useState("");
 
   /* ---- Simpan draf otomatis ke localStorage setiap ada perubahan data ---- */
   useEffect(() => {
@@ -530,6 +531,8 @@ function AdminDashboard() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    setGalleryUploadError("");
+
     if (!isSupabaseConfigured) {
       // Server belum terhubung: pakai preview sementara saja (tidak permanen)
       const items = files.map((f) => ({
@@ -542,15 +545,20 @@ function AdminDashboard() {
 
     setUploadingGallery(true);
     const newItems = [];
+    const errors = [];
     for (const f of files) {
+      const sizeMB = f.size / (1024 * 1024);
       const { url, error } = await uploadMediaToStorage(data.slug, f);
       if (url) {
         newItems.push({ type: f.type.startsWith("video") ? "video" : "image", url });
       } else {
-        console.error("Upload gagal:", error);
+        errors.push(`${f.name} (${sizeMB.toFixed(1)}MB): ${error}`);
       }
     }
     setData((prev) => ({ ...prev, gallery: [...prev.gallery, ...newItems] }));
+    if (errors.length > 0) {
+      setGalleryUploadError(errors.join(" | "));
+    }
     setUploadingGallery(false);
   };
 
@@ -902,6 +910,12 @@ function AdminDashboard() {
                       disabled={uploadingGallery}
                     />
                   </label>
+
+                  {galleryUploadError && (
+                    <p className="text-[11px] text-red-400 mb-3 break-all leading-relaxed">
+                      ⚠️ Gagal upload: {galleryUploadError}
+                    </p>
+                  )}
 
                   <div className="grid grid-cols-3 gap-2">
                     {data.gallery.map((item, idx) => (
